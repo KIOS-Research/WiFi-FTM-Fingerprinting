@@ -1,3 +1,6 @@
 /.gradle/
 /.idea/
 /build/
+/src/main/resources/coordinates/
+/src/main/resources/errors/
+/src/main/resources/radioMaps/
