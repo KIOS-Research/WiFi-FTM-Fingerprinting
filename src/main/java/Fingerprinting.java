@@ -2,6 +2,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Fingerprinting {
@@ -12,6 +13,9 @@ public class Fingerprinting {
     private static String routeFilePath;
     private static String coordinatesPath;
     private static int distanceAlgorithm = -1;
+
+    private static final ArrayList<String> rssResults = new ArrayList<>();
+    private static final ArrayList<String> ftmResults = new ArrayList<>();
 
     public static void main(String[] args) {
         String workingDirectory = System.getProperty("user.dir") + "/src/main/resources/";
@@ -48,6 +52,12 @@ public class Fingerprinting {
 
                 if (doFTM)
                     execute("ftm", i, 5, ftmRadioMap);
+
+                if (i != 0 && doRSS && doFTM){
+                    execute("fused", i, 6, null);
+                    rssResults.clear();
+                    ftmResults.clear();
+                }
 
                 progressBar(i);
             }
@@ -142,6 +152,12 @@ public class Fingerprinting {
         System.out.println("WKNN - KullbackLeibler: " + readContent("ftm", "WKNN - KullbackLeibler"));
         System.out.println("MAP: " + readContent("ftm", "MAP"));
         System.out.println("MMSE: " + readContent("ftm", "MMSE"));
+
+        System.out.println("\nFUSED\n---");
+        System.out.println("KNN: NaN");
+        System.out.println("WKNN: " + readContent("fused", "WKNN"));
+        System.out.println("MAP: " + readContent("fused", "MAP"));
+        System.out.println("MMSE: " + readContent("fused", "MMSE"));
     }
 
     private static void progressBar(int i) {
@@ -211,7 +227,8 @@ public class Fingerprinting {
     }
 
     private static void execute(String type, int i, int value, RadioMap radioMap) {
-        Algorithms.TYPE = type;
+        if (!type.equals("fused"))
+            Algorithms.TYPE = type;
 
         File error = new File(errorPath + type);
         if (!error.exists() && !error.mkdirs()) {
@@ -232,7 +249,7 @@ public class Fingerprinting {
             File coordinatesFile;
             File realCoordinatesFile;
 
-            if ((type.equals("rss") || type.equals("exd")) && (i == 1)) {
+            if (type.equals("rss") && (i == 1)) {
                 errorFile = new File(errorPath + type + "/" + algorithmNames[i] + " - Euclidean");
                 coordinatesFile = new File(coordinatesPath + type + "/" + algorithmNames[i] + " - Euclidean");
             } else if (type.equals("ftm") && (i == 1)) {
@@ -249,15 +266,23 @@ public class Fingerprinting {
             BufferedWriter bufferedWriterCoordinates = new BufferedWriter(new FileWriter(coordinatesFile, false));
             BufferedWriter bufferedWriterRealCoordinates = new BufferedWriter(new FileWriter(realCoordinatesFile, false));
 
+            int counter = 0;
             while (routeFile.eof()) {
                 String result;
 
                 switch (type) {
                     case "rss":
                         result = Algorithms.ProcessingAlgorithms(routeFile.getLatestScanList(value), radioMap, i + 1);
+                        if (i != 0) rssResults.add(result);
                         break;
                     case "ftm":
                         result = Algorithms.ProcessingAlgorithms(routeFile.getLatestScanList(value), routeFile.getLatestStdScanList(), radioMap, i + 1, distanceAlgorithm);
+                        if (i != 0) ftmResults.add(result);
+                        break;
+                    case "fused":
+                        routeFile.getLatestScanList(value);
+                        result = Algorithms.FusedEngine(rssResults.get(counter), ftmResults.get(counter));
+                        counter++;
                         break;
                     default:
                         throw new IllegalStateException("Unexpected value.");

@@ -4,12 +4,45 @@ import org.apache.commons.math3.linear.RealMatrix;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Objects;
 
 public class Algorithms {
     public static String TYPE;
     public static RadioMap stdRadioMap;
     public static boolean sGreekFromFile;
     public static String[] parameters = new String[8];
+
+    private static final ArrayList<Double> rssProbabilities = new ArrayList<>();
+    private static final ArrayList<Double> ftmProbabilities = new ArrayList<>();
+
+    private static final ArrayList<Double[][]> rssCoordinates = new ArrayList<>();
+    private static final ArrayList<Double[][]> ftmCoordinates = new ArrayList<>();
+
+    public static String FusedEngine(String rssResult, String ftmResult) {
+        RealMatrix rssLoc = MatrixUtils.createRealMatrix(2, 1);
+        rssLoc.setEntry(0, 0, Double.parseDouble(rssResult.split(" ")[0]));
+        rssLoc.setEntry(1, 0, Double.parseDouble(rssResult.split(" ")[1]));
+
+        RealMatrix ftmLoc = MatrixUtils.createRealMatrix(2, 1);
+        ftmLoc.setEntry(0, 0, Double.parseDouble(ftmResult.split(" ")[0]));
+        ftmLoc.setEntry(1, 0, Double.parseDouble(ftmResult.split(" ")[1]));
+
+        RealMatrix rssCov = calculateCovarianceMatrix(rssLoc);
+        RealMatrix ftmCov = calculateCovarianceMatrix(ftmLoc);
+
+        try {
+            RealMatrix rssInv = MatrixUtils.inverse(rssCov);
+            RealMatrix ftmInv = MatrixUtils.inverse(ftmCov);
+
+            RealMatrix sigma = MatrixUtils.inverse(rssInv.add(ftmInv));
+            RealMatrix location = sigma.multiply(rssInv.multiply(rssLoc).add(ftmInv.multiply(ftmLoc)));
+
+            return location.getEntry(0, 0) + " " + location.getEntry(1, 0);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
     public static String ProcessingAlgorithms(ArrayList<LogRecord> latestScanList, RadioMap RM, int algorithm_choice) {
         int i, j;
@@ -130,6 +163,7 @@ public class Algorithms {
             return null;
         }
 
+        clearLists();
         // Construct a list with locations-distances pairs
         for (String location : RM.getLocationHashMap().keySet()) {
             values = RM.getLocationHashMap().get(location);
@@ -169,6 +203,7 @@ public class Algorithms {
             return null;
         }
 
+        clearLists();
         // Construct a list with locations-distances pairs
         for (String location : RM.getLocationHashMap().keySet()) {
             values = RM.getLocationHashMap().get(location);
@@ -224,10 +259,19 @@ public class Algorithms {
             return null;
         }
 
+        clearLists();
         // Find the location of user with the highest probability
         for (String location : RM.getLocationHashMap().keySet()) {
             values = RM.getLocationHashMap().get(location);
             curResult = calculateProbability(values, observedValues, sGreek, location);
+
+            if (!isWeighted) {
+                rssProbabilities.add(curResult);
+                ftmProbabilities.add(curResult);
+
+                rssCoordinates.add(new Double[][]{{Double.parseDouble(location.split(" ")[0])}, {Double.parseDouble(location.split(" ")[1])}});
+                ftmCoordinates.add(new Double[][]{{Double.parseDouble(location.split(" ")[0])}, {Double.parseDouble(location.split(" ")[1])}});
+            }
 
             if (curResult == Double.NEGATIVE_INFINITY)
                 return null;
@@ -242,8 +286,54 @@ public class Algorithms {
 
         if (isWeighted)
             myLocation = calculateWeightedAverageProbabilityLocations(locDistanceResultsList);
+        else {
+            double sumRSSProbabilities = 0;
+            double sumFTMProbabilities = 0;
+
+            for (Double probability : rssProbabilities)
+                sumRSSProbabilities += probability;
+
+            for (Double probability : ftmProbabilities)
+                sumFTMProbabilities += probability;
+
+            for (int i = 0; i < rssProbabilities.size(); i++) {
+                rssProbabilities.set(i, rssProbabilities.get(i) / sumRSSProbabilities);
+            }
+
+            for (int i = 0; i < ftmProbabilities.size(); i++) {
+                ftmProbabilities.set(i, ftmProbabilities.get(i) / sumFTMProbabilities);
+            }
+        }
 
         return myLocation;
+    }
+
+    private static RealMatrix calculateCovarianceMatrix(RealMatrix predictedLocation) {
+        ArrayList<Double> probabilities = null;
+        ArrayList<Double[][]> coordinates = null;
+
+        if (TYPE.equals("rss")) {
+            coordinates = rssCoordinates;
+            probabilities = rssProbabilities;
+        } else if (TYPE.equals("ftm")) {
+            coordinates = ftmCoordinates;
+            probabilities = ftmProbabilities;
+        }
+
+        double x = predictedLocation.getEntry(0, 0);
+        double y = predictedLocation.getEntry(1, 0);
+        RealMatrix covMatrix = MatrixUtils.createRealMatrix(2, 2);
+
+        for (int i = 0; i < Objects.requireNonNull(probabilities).size(); i++) {
+            double xi = coordinates.get(i)[0][0], yi = coordinates.get(i)[1][0];
+
+            covMatrix.setEntry(0, 0, covMatrix.getEntry(0, 0) + probabilities.get(i) * Math.pow(xi - x, 2));
+            covMatrix.setEntry(0, 1, covMatrix.getEntry(0, 1) + probabilities.get(i) * (xi - x) * (yi - y));
+            covMatrix.setEntry(1, 0, covMatrix.getEntry(1, 0) + probabilities.get(i) * (yi - y) * (xi - x));
+            covMatrix.setEntry(1, 1, covMatrix.getEntry(1, 1) + probabilities.get(i) * Math.pow(yi - y, 2));
+        }
+
+        return covMatrix;
     }
 
     private static double calculateEuclideanDistance(ArrayList<String> l1, ArrayList<String> l2) {
@@ -348,7 +438,7 @@ public class Algorithms {
         return distance;
     }
 
-    public static double calculateProbability(ArrayList<String> l1, ArrayList<String> l2, double sGreek, String location) {
+    private static double calculateProbability(ArrayList<String> l1, ArrayList<String> l2, double sGreek, String location) {
         double v1;
         double v2;
         double temp;
@@ -410,7 +500,7 @@ public class Algorithms {
         return sumX + " " + sumY;
     }
 
-    public static String calculateWeightedAverageKDistanceLocations(ArrayList<LocDistance> locDistanceResultsList, int K) {
+    private static String calculateWeightedAverageKDistanceLocations(ArrayList<LocDistance> locDistanceResultsList, int K) {
         double x, y;
         double locationWeight;
         double sumWeights = 0;
@@ -438,9 +528,27 @@ public class Algorithms {
                 return null;
             }
 
+            if (TYPE.equals("rss")) {
+                rssCoordinates.add(new Double[][]{{x}, {y}});
+                rssProbabilities.add(locationWeight);
+            } else if (TYPE.equals("ftm")) {
+                ftmCoordinates.add(new Double[][]{{x}, {y}});
+                ftmProbabilities.add(locationWeight);
+            }
+
             sumWeights += locationWeight;
             weightedSumX += locationWeight * x;
             weightedSumY += locationWeight * y;
+        }
+
+        if (TYPE.equals("rss")) {
+            for (int i = 0; i < rssProbabilities.size(); i++) {
+                rssProbabilities.set(i, rssProbabilities.get(i) / (float) sumWeights);
+            }
+        } else if (TYPE.equals("ftm")) {
+            for (int i = 0; i < ftmProbabilities.size(); i++) {
+                ftmProbabilities.set(i, ftmProbabilities.get(i) / (float) sumWeights);
+            }
         }
 
         weightedSumX /= sumWeights;
@@ -449,7 +557,7 @@ public class Algorithms {
         return weightedSumX + " " + weightedSumY;
     }
 
-    public static String calculateWeightedAverageProbabilityLocations(ArrayList<LocDistance> locDistanceResultsList) {
+    private static String calculateWeightedAverageProbabilityLocations(ArrayList<LocDistance> locDistanceResultsList) {
         double NP;
         double x, y;
         double weightedSumX = 0;
@@ -475,13 +583,21 @@ public class Algorithms {
 
             NP = locDistance.getDistance() / sumProbabilities;
 
+            if (TYPE.equals("rss")) {
+                rssProbabilities.add(NP);
+                rssCoordinates.add(new Double[][]{{x}, {y}});
+            } else if (TYPE.equals("ftm")) {
+                ftmProbabilities.add(NP);
+                ftmCoordinates.add(new Double[][]{{x}, {y}});
+            }
+
             weightedSumX += (x * NP);
             weightedSumY += (y * NP);
         }
         return weightedSumX + " " + weightedSumY;
     }
 
-    public static String readParameter(int algorithm_choice) {
+    private static String readParameter(int algorithm_choice) {
         if (algorithm_choice == 1) {
             return (TYPE.equals("rss") ? parameters[0] : parameters[4]);
         } else if (algorithm_choice == 2) {
@@ -492,5 +608,12 @@ public class Algorithms {
             return (TYPE.equals("rss") ? parameters[3] : parameters[7]);
         }
         return null;
+    }
+
+    private static void clearLists() {
+        rssCoordinates.clear();
+        ftmCoordinates.clear();
+        rssProbabilities.clear();
+        ftmProbabilities.clear();
     }
 }
