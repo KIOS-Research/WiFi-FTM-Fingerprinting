@@ -236,8 +236,8 @@ public class RadioMap {
                     line = line.replace(", ", " ");
                     String[] temp = line.split(" ");
 
-                    Float.parseFloat(temp[1]);
-                    Float.parseFloat(temp[2]);
+                    Double.parseDouble(temp[1]);
+                    Double.parseDouble(temp[2]);
 
                     if (!temp[3].matches("[a-fA-F0-9]{2}:[a-fA-F0-9]{2}:[a-fA-F0-9]{2}:[a-fA-F0-9]{2}:[a-fA-F0-9]{2}:[a-fA-F0-9]{2}")) {
                         throw new Exception("MAC Address is not valid. Line: " + currentLine);

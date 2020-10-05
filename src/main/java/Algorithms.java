@@ -7,16 +7,15 @@ import java.util.Comparator;
 import java.util.Objects;
 
 public class Algorithms {
+    private static final ArrayList<Double> rssProbabilities = new ArrayList<>();
+    private static final ArrayList<Double> ftmProbabilities = new ArrayList<>();
+    private static final ArrayList<Double[][]> rssCoordinates = new ArrayList<>();
+    private static final ArrayList<Double[][]> ftmCoordinates = new ArrayList<>();
+
     public static String TYPE;
     public static RadioMap stdRadioMap;
     public static boolean sGreekFromFile;
     public static String[] parameters = new String[8];
-
-    private static final ArrayList<Double> rssProbabilities = new ArrayList<>();
-    private static final ArrayList<Double> ftmProbabilities = new ArrayList<>();
-
-    private static final ArrayList<Double[][]> rssCoordinates = new ArrayList<>();
-    private static final ArrayList<Double[][]> ftmCoordinates = new ArrayList<>();
 
     public static String FusedEngine(String rssResult, String ftmResult) {
         RealMatrix rssLoc = MatrixUtils.createRealMatrix(2, 1);
@@ -543,11 +542,11 @@ public class Algorithms {
 
         if (TYPE.equals("rss")) {
             for (int i = 0; i < rssProbabilities.size(); i++) {
-                rssProbabilities.set(i, rssProbabilities.get(i) / (float) sumWeights);
+                rssProbabilities.set(i, rssProbabilities.get(i) / sumWeights);
             }
         } else if (TYPE.equals("ftm")) {
             for (int i = 0; i < ftmProbabilities.size(); i++) {
-                ftmProbabilities.set(i, ftmProbabilities.get(i) / (float) sumWeights);
+                ftmProbabilities.set(i, ftmProbabilities.get(i) / sumWeights);
             }
         }
 

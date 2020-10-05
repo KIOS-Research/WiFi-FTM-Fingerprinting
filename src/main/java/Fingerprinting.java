@@ -6,6 +6,9 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Fingerprinting {
+    private static final ArrayList<String> rssResults = new ArrayList<>();
+    private static final ArrayList<String> ftmResults = new ArrayList<>();
+
     private static final String[] algorithmNames = {"KNN", "WKNN", "MAP", "MMSE"};
     private static final String[] distanceAlgorithms = {"Euclidean", "Bhattacharyya", "KullbackLeibler"};
 
@@ -13,9 +16,6 @@ public class Fingerprinting {
     private static String routeFilePath;
     private static String coordinatesPath;
     private static int distanceAlgorithm = -1;
-
-    private static final ArrayList<String> rssResults = new ArrayList<>();
-    private static final ArrayList<String> ftmResults = new ArrayList<>();
 
     public static void main(String[] args) {
         String workingDirectory = System.getProperty("user.dir") + "/src/main/resources/";
