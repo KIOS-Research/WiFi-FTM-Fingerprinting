@@ -1,13 +1,13 @@
 public class LogRecord {
-    private final int value;
+    private final float value;
     private final String bssid;
 
-    public LogRecord(int value, String bssid) {
+    public LogRecord(float value, String bssid) {
         this.value = value;
         this.bssid = bssid;
     }
 
-    public int getValue() {
+    public float getValue() {
         return value;
     }
 

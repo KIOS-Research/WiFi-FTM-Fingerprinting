@@ -7,6 +7,7 @@ import java.util.Comparator;
 import java.util.Objects;
 
 public class Algorithms {
+    private static final int AP = 8;
     private static final ArrayList<Double> rssProbabilities = new ArrayList<>();
     private static final ArrayList<Double> ftmProbabilities = new ArrayList<>();
     private static final ArrayList<Double[][]> rssCoordinates = new ArrayList<>();
@@ -358,7 +359,7 @@ public class Algorithms {
     }
 
     private static double calculateKullbackLeibler(ArrayList<String> values, ArrayList<String> stdValues, ArrayList<String> observedValues, ArrayList<String> stdObservedValues) {
-        int n = 5; //Number of APs
+        int n = AP;
         double distance;
 
         RealMatrix m0 = MatrixUtils.createRealMatrix(n, 1);
@@ -395,7 +396,7 @@ public class Algorithms {
     }
 
     private static double calculateBhattacharyyaDistance(ArrayList<String> values, ArrayList<String> stdValues, ArrayList<String> observedValues, ArrayList<String> stdObservedValues) {
-        int n = 5; //Number of APs
+        int n = AP;
         double distance;
 
         RealMatrix m1 = MatrixUtils.createRealMatrix(n, 1);

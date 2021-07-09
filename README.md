@@ -31,7 +31,7 @@ The project consist of 3 tasks, RadioMap Builder, Fingerprinting Localization, a
 To generate radioMaps
 
 - Input: radioMap
-- Output: rssRadioMap, ftmRadioMap, stdRadioMap
+- Output: rssRadioMap, ftmRadioMap, stdRadioMap, exdRadioMap
 
 #### Fingerprint Localization
 To compute positioning errors through fingerprinting
@@ -43,7 +43,7 @@ To compute positioning errors through fingerprinting
 To print positioning errors
 
 #### Structure of input files
-In order to run the project input files (radioMap and route) should follow the below structure. Sample files are included in the project.
+In order to run the project input files (radioMap and route) should follow the below structure. Sample files included.
 ```
 ...
 # Timestamp, X, Y, MAC Address of AP, RSS, Range, stdRange

@@ -13,7 +13,7 @@ public class RadioMap {
     private final String radioMapFolder;
 
     private final int readValue;
-    private final int defaultNaNValue;
+    private final float defaultNaNValue;
 
     public double minValue;
     public double maxValue;
@@ -43,7 +43,7 @@ public class RadioMap {
 
         decimalFormat.setDecimalFormatSymbols(decimalFormatSymbols);
 
-        HashMap<String, ArrayList<Integer>> macAddressMap;
+        HashMap<String, ArrayList<Float>> macAddressMap;
 
         File radioMap = new File(radioMapFolder);
         if (!radioMap.exists() && !radioMap.mkdirs()) {
@@ -74,7 +74,7 @@ public class RadioMap {
             for (Map.Entry<String, HashMap<Integer, ArrayList<Object>>> entry : newRadioMap.entrySet()) {
                 for (Map.Entry<Integer, ArrayList<Object>> entry1 : entry.getValue().entrySet()) {
                     macAddressMap = uncheckedCast(entry1.getValue().get(0));
-                    for (Map.Entry<String, ArrayList<Integer>> entry2 : macAddressMap.entrySet()) {
+                    for (Map.Entry<String, ArrayList<Float>> entry2 : macAddressMap.entrySet()) {
                         String macAddress = entry2.getKey();
                         if (!macKeys.contains(macAddress.toLowerCase())) {
                             macKeys.add(macAddress.toLowerCase());
@@ -94,8 +94,8 @@ public class RadioMap {
                 for (Map.Entry<Integer, ArrayList<Object>> entry1 : entry.getValue().entrySet()) {
                     maxValues = 0;
                     macAddressMap = uncheckedCast(entry1.getValue().get(0));
-                    for (Map.Entry<String, ArrayList<Integer>> entry2 : macAddressMap.entrySet()) {
-                        ArrayList<Integer> values = entry2.getValue();
+                    for (Map.Entry<String, ArrayList<Float>> entry2 : macAddressMap.entrySet()) {
+                        ArrayList<Float> values = entry2.getValue();
                         if (values.size() > maxValues) {
                             maxValues = values.size();
                         }
@@ -106,7 +106,7 @@ public class RadioMap {
                     for (int i = 0; i < maxValues; i++) {
                         fileOutputStream.write(x_y.getBytes());
                         for (String macKey : macKeys) {
-                            int value;
+                            float value;
                             if (macAddressMap.containsKey(macKey.toLowerCase())) {
                                 if (i >= macAddressMap.get(macKey.toLowerCase()).size() && macAddressMap.get(macKey.toLowerCase()).size() < maxValues) {
                                     value = defaultNaNValue;
@@ -142,14 +142,14 @@ public class RadioMap {
     }
 
     private void parseInputFileToRadioMap(File inputFile) {
-        ArrayList<Integer> values;
+        ArrayList<Float> values;
         ArrayList<Object> orientationList;
-        HashMap<String, ArrayList<Integer>> macAddressMap;
+        HashMap<String, ArrayList<Float>> macAddressMap;
 
         if (!authenticateInputFile(inputFile)) return;
 
         try {
-            int value;
+            float value;
             String key;
             String line;
             FileReader fileReader = new FileReader(inputFile);
@@ -161,7 +161,7 @@ public class RadioMap {
                     line = line.replace(", ", " ");
                     String[] temp = line.split(" ");
 
-                    value = Integer.parseInt(temp[readValue]);
+                    value = Float.parseFloat(temp[readValue]);
                     key = temp[1] + ", " + temp[2];
 
                     HashMap<Integer, ArrayList<Object>> orientationLists = newRadioMap.get(key);
@@ -244,8 +244,8 @@ public class RadioMap {
                     }
 
                     Integer.parseInt(temp[4]);
-                    Integer.parseInt(temp[5]);
-                    Integer.parseInt(temp[6]);
+                    Float.parseFloat(temp[5]);
+                    Float.parseFloat(temp[6]);
                 }
                 currentLine++;
                 line = bufferedReader.readLine();
