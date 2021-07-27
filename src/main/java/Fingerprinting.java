@@ -22,6 +22,7 @@ public class Fingerprinting {
     private static int distanceAlgorithm = -1;
 
     public static void main(String[] args) {
+        String[] ARGS = new String[1];
         String workingDirectory = System.getProperty("user.dir") + "/src/main/resources/";
 
         //Path Variables
@@ -29,54 +30,77 @@ public class Fingerprinting {
         routeFilePath = workingDirectory + "route";
         coordinatesPath = workingDirectory + "coordinates/";
 
-        //Task
-        if (args.length == 0) {
-            use_scanner = true;
-        } else if (args[0].equals("results")) {
+        int from = 1, to = 16, step = 1;
+        if (args.length != 0 && args[0].equals("results")) {
             printResults(workingDirectory);
             return;
-        } else {
-            inputs.addAll(Arrays.asList(args[0].split(" ")));
+        } else if (args.length != 0 && args[0].equals("use_scanner")) {
+            to = 1;
+            use_scanner = true;
         }
 
-        String rssRadioMapPath = workingDirectory + "radioMaps/rssRadioMap";
-        String ftmRadioMapPath = workingDirectory + "radioMaps/ftmRadioMap";
-        String stdRadioMapPath = workingDirectory + "radioMaps/stdRadioMap";
-        String exdRadioMapPath = workingDirectory + "radioMaps/exdRadioMap";
+        for (int i = from; i <= to; i += step) {
+            for (int j = 1; j <= 3; j++) {
+                String RSS = "y " + i + " " + i + " " + i + " " + i;
+                if (i == to)
+                    RSS = "y " + (i - 1) + " " + (i - 1) + " " + (i - 1) + " " + (i - 1);
+                if (j > 1)
+                    RSS = "n";
 
-        //RadioMaps
-        try {
-            RadioMap rssRadioMap = new RadioMap(new File(rssRadioMapPath));
-            RadioMap ftmRadioMap = new RadioMap(new File(ftmRadioMapPath));
-            Algorithms.stdRadioMap = new RadioMap(new File(stdRadioMapPath));
-            ExtendedRadioMap exdRadioMap = new ExtendedRadioMap(new File(exdRadioMapPath));
+                String FTM = "y " + i + " " + i + " " + j + " n " + i + " " + i;
+                if (i == to)
+                    FTM = "y " + (i - 1) + " " + (i - 1) + " " + j + " y";
 
-            //Menu
-            boolean doRSS = menu("RSS");
-            boolean doFTM = menu("FTM");
-            boolean doEXD = menu("EXD");
+                String EXD = "y " + i + " " + i + " " + i / 100.0 + " " + i / 100.0;
+                if (i == to)
+                    EXD = "y " + (i - 1) + " " + (i - 1) + " " + (i - 1) / 100.0 + " " + (i - 1) / 100.0;
+                if (j > 1)
+                    EXD = "n";
 
-            progressBar(-1);
-            for (int i = 0; i < 4; i++) {
-                if (doRSS)
-                    execute("rss", i, 4, rssRadioMap, null);
+                ARGS[0] = RSS + " " + FTM + " " + EXD;
 
-                if (doFTM)
-                    execute("ftm", i, 5, ftmRadioMap, null);
+                inputs.addAll(Arrays.asList(ARGS[0].split(" ")));
+                String rssRadioMapPath = workingDirectory + "radioMaps/rssRadioMap";
+                String ftmRadioMapPath = workingDirectory + "radioMaps/ftmRadioMap";
+                String stdRadioMapPath = workingDirectory + "radioMaps/stdRadioMap";
+                String exdRadioMapPath = workingDirectory + "radioMaps/exdRadioMap";
 
-                if (i != 0 && doRSS && doFTM) {
-                    execute("fused", i, 6, null, null);
-                    rssResults.clear();
-                    ftmResults.clear();
+                //RadioMaps
+                try {
+                    RadioMap rssRadioMap = new RadioMap(new File(rssRadioMapPath));
+                    RadioMap ftmRadioMap = new RadioMap(new File(ftmRadioMapPath));
+                    Algorithms.stdRadioMap = new RadioMap(new File(stdRadioMapPath));
+                    ExtendedRadioMap exdRadioMap = new ExtendedRadioMap(new File(exdRadioMapPath));
+
+                    //Menu
+                    boolean doRSS = menu("RSS");
+                    boolean doFTM = menu("FTM");
+                    boolean doEXD = menu("EXD");
+
+                    progressBar(-1);
+                    for (int k = 0; k < algorithmNames.length; k++) {
+                        if (doRSS)
+                            execute("rss", k, 4, rssRadioMap, null);
+
+                        if (doFTM)
+                            execute("ftm", k, 5, ftmRadioMap, null);
+
+                        if (k != 0 && doRSS && doFTM) {
+                            execute("fused", k, 6, null, null);
+                            rssResults.clear();
+                            ftmResults.clear();
+                        }
+
+                        if (doEXD)
+                            execute("exd", k, -1, null, exdRadioMap);
+
+                        progressBar(k);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-
-                if (doEXD)
-                    execute("exd", i, -1, null, exdRadioMap);
-
-                progressBar(i);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+            printResults(workingDirectory);
         }
     }
 
