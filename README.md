@@ -1,5 +1,5 @@
 # WiFi-FTM-Fingerprinting
-The source code published in the paper: Sami Huilla and Chrysanthos Pepi and Michalis Antoniou and Christos Laoudias and Seppo Horsmanheimo and Sergio Lembo and Matti Laukkanen and Georgios Ellinas, “Indoor Fingerprinting with Wi-Fi Fine Timing Measurements Through Range Filtering and Fingerprinting Methods”, IEEE 31st Annual International Symposium on Personal, Indoor and Mobile Radio Communications (PIMRC), 2020.
+The source code for the paper: Sami Huilla and Chrysanthos Pepi and Michalis Antoniou and Christos Laoudias and Seppo Horsmanheimo and Sergio Lembo and Matti Laukkanen and Georgios Ellinas, “Indoor Fingerprinting with Wi-Fi Fine Timing Measurements Through Range Filtering and Fingerprinting Methods”, IEEE 31st Annual International Symposium on Personal, Indoor and Mobile Radio Communications (PIMRC), 2020.
 
 ## Abstract
 Wi-Fi technology has been thoroughly studied for indoor localization. This
